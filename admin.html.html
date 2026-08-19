@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waslah Admin - لوحة التحكم</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        sora: ['Sora', 'sans-serif'],
+                        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#2563EB',
+                        purple: '#7C3AED',
+                        navy: '#111827',
+                        success: '#22C55E',
+                        warning: '#F59E0B',
+                        light: '#F8FAFC',
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px rgba(0,0,0,0.03)',
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+                    },
+                    borderRadius: {
+                        'xl': '16px',
+                        '2xl': '20px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #F1F5F9; color: #111827; }
+        .en-text { font-family: 'Sora', sans-serif; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .nav-item { transition: all 0.2s ease; border-right: 4px solid transparent; }
+        .nav-item:hover, .nav-item.active {
+            background-color: #EFF6FF;
+            color: #2563EB;
+            border-right: 4px solid #2563EB;
+        }
+
+        .status-badge { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        .status-pending { background-color: #FEF3C7; color: #D97706; }
+        .status-paid { background-color: #DCFCE7; color: #16A34A; }
+        .status-shipped { background-color: #E0E7FF; color: #4338CA; }
+
+        .btn-lift { transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+
+        /* حركات التنقل بين الصفحات */
+        .fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Mobile Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-navy/50 z-40 hidden md:hidden"></div>
+
+    <aside id="admin-sidebar" class="w-72 bg-white border-l border-gray-200 flex flex-col h-full shadow-soft z-50 fixed md:relative transform translate-x-full md:translate-x-0 transition-transform duration-300">
+        <!-- Logo -->
+        <div class="h-20 flex items-center justify-between border-b border-gray-100 px-6">
+            <img src="https://lh3.googleusercontent.com/gg/ACRwjasGD0rvXarAlB27Sd7dj3CeV3Ky8xKieLmp_fRRYTlsVdMo2ZHRtXUlf6C5pGzLVd3ORPUQEIU4tnZtlPg6JwL0zx5x2iI94aRxCZmLJo_Ic0KgjBABAYgeC6MQPYuU6kWESxT38DLwZV_A_p4aa7YIVfv9cgdSRu2rxlSjewyP-Hvfih_JykiKNHdKo_i4_bLUbSHKhBqBL9b0kDm-gFdCxjq3yd8Al6O8fed-wO9y90f9W4u18dd7Ciz6sBqHi0xdCtW6TJwFrFQCdVEiA48hgwjHMVyYwRE=s0" alt="Waslah Logo" class="h-10 object-contain">
+            <button id="close-sidebar" class="md:hidden text-gray-500 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Links (تمت إضافة data-target للتحكم بالصفحات) -->
+        <nav class="flex-1 py-6 px-4 space-y-2 overflow-y-auto" id="main-nav">
+            <a href="#" data-target="overview" class="nav-item active flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-gray-600">
+                <i class="fa-solid fa-chart-pie text-lg w-6 text-center"></i> نظرة عامة
+            </a>
+            <a href="#" data-target="orders" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-gray-600">
+                <i class="fa-solid fa-box-open text-lg w-6 text-center"></i> الطلبات
+                <span class="mr-auto bg-red-500 text-white text-[10px] px-2 py-1 rounded-full en-text">12</span>
+            </a>
+            <a href="#" data-target="customers" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-gray-600">
+                <i class="fa-solid fa-users text-lg w-6 text-center"></i> العملاء
+            </a>
+            <a href="#" data-target="finance" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-gray-600">
+                <i class="fa-solid fa-wallet text-lg w-6 text-center"></i> المالية والمحافظ
+            </a>
+            <a href="#" data-target="shipping" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-gray-600">
+                <i class="fa-solid fa-plane-departure text-lg w-6 text-center"></i> الشحن الدولي
+            </a>
+            <a href="#" data-target="settings" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-gray-600">
+                <i class="fa-solid fa-gear text-lg w-6 text-center"></i> الإعدادات
+            </a>
+        </nav>
+
+        <!-- Admin Profile -->
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                <div class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold en-text">Y</div>
+                <div>
+                    <p class="font-bold text-sm text-navy">ياسر أحمد</p>
+                    <p class="text-xs text-gray-500">المدير العام</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden w-full">
+        
+        <!-- Header -->
+        <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shadow-sm z-10 shrink-0">
+            <div class="flex items-center gap-3">
+                <button id="sidebar-toggle" class="md:hidden text-2xl text-navy focus:outline-none"><i class="fa-solid fa-bars"></i></button>
+                <h1 id="page-title" class="text-xl md:text-2xl font-extrabold text-navy truncate">نظرة عامة</h1>
+            </div>
+            
+            <div class="flex items-center gap-4 md:gap-6">
+                <!-- Search -->
+                <div class="relative hidden md:block w-72">
+                    <i class="fa-solid fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="ابحث برقم الطلب أو اسم العميل..." class="w-full bg-light border border-gray-200 rounded-xl py-2 pr-10 pl-4 outline-none focus:border-primary transition-colors text-sm">
+                </div>
+                
+                <button class="relative text-gray-500 hover:text-primary transition-colors text-xl" title="الإشعارات">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+
+                <a href="index.html" class="text-gray-500 hover:text-red-500 transition-colors text-xl mr-2" title="تسجيل الخروج / العودة للموقع">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </a>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 relative" id="main-content-area">
+            
+            <!-- القسم 1: نظرة عامة (Overview) -->
+            <div id="section-overview" class="content-section block fade-in">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Card 1 -->
+                    <div class="glass-panel p-6 rounded-2xl shadow-card flex items-center gap-4">
+                        <div class="w-14 h-14 bg-blue-50 text-primary rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-500 font-bold mb-1">إيرادات اليوم</p>
+                            <p class="en-text text-2xl font-extrabold text-navy">YR 450,000</p>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="glass-panel p-6 rounded-2xl shadow-card flex items-center gap-4">
+                        <div class="w-14 h-14 bg-orange-50 text-warning rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-file-invoice"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-500 font-bold mb-1">طلبات تنتظر المراجعة</p>
+                            <p class="en-text text-2xl font-extrabold text-navy">12 <span class="text-xs text-gray-400 font-medium">طلب</span></p>
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="glass-panel p-6 rounded-2xl shadow-card flex items-center gap-4">
+                        <div class="w-14 h-14 bg-purple-50 text-purple rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-plane-up"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-500 font-bold mb-1">شحنات في الطريق لليمن</p>
+                            <p class="en-text text-2xl font-extrabold text-navy">84 <span class="text-xs text-gray-400 font-medium">شحنة</span></p>
+                        </div>
+                    </div>
+                    <!-- Card 4 -->
+                    <div class="glass-panel p-6 rounded-2xl shadow-card flex items-center gap-4">
+                        <div class="w-14 h-14 bg-green-50 text-success rounded-xl flex items-center justify-center text-2xl"><i class="fa-solid fa-users"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-500 font-bold mb-1">العملاء النشطين</p>
+                            <p class="en-text text-2xl font-extrabold text-navy">+1,200</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl shadow-card overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                        <h2 class="text-lg font-extrabold text-navy">أحدث الطلبات (تحتاج إجراء)</h2>
+                        <button class="text-primary font-bold text-sm hover:underline" onclick="switchToSection('orders')">عرض الكل</button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm border-b border-gray-100">
+                                    <th class="py-4 px-6 font-bold">رقم الطلب</th>
+                                    <th class="py-4 px-6 font-bold">العميل</th>
+                                    <th class="py-4 px-6 font-bold">المتجر / المنتج</th>
+                                    <th class="py-4 px-6 font-bold">طريقة الدفع</th>
+                                    <th class="py-4 px-6 font-bold">الإجمالي</th>
+                                    <th class="py-4 px-6 font-bold">الحالة</th>
+                                    <th class="py-4 px-6 font-bold text-center">الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm">
+                                
+                                <!-- Row 1: Needs Receipt Review -->
+                                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors bg-orange-50/20">
+                                    <td class="py-4 px-6 font-bold text-navy en-text">#WSL-9842</td>
+                                    <td class="py-4 px-6">
+                                        <p class="font-bold text-navy">أحمد محمد</p>
+                                        <p class="text-xs text-gray-500 en-text" dir="ltr">+967 77X XXX</p>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden"><img src="https://placehold.co/100/2563EB/ffffff?text=SH" class="w-full h-full object-cover"></div>
+                                            <div>
+                                                <p class="font-bold text-navy text-xs en-text">SHEIN</p>
+                                                <p class="text-xs text-gray-500 truncate w-32">فستان صيفي...</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 font-bold text-gray-600">بنك الكريمي</td>
+                                    <td class="py-4 px-6 font-extrabold text-navy en-text">YR 13,785</td>
+                                    <td class="py-4 px-6"><span class="status-badge status-pending">مراجعة الحوالة</span></td>
+                                    <td class="py-4 px-6 text-center">
+                                        <button onclick="openReceiptModal()" class="bg-primary text-white px-4 py-2 rounded-lg font-bold text-xs btn-lift shadow-sm">
+                                            مراجعة السند
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Row 2: Paid & Ready to Order -->
+                                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                    <td class="py-4 px-6 font-bold text-navy en-text">#WSL-9841</td>
+                                    <td class="py-4 px-6">
+                                        <p class="font-bold text-navy">فاطمة علي</p>
+                                        <p class="text-xs text-gray-500 en-text" dir="ltr">+967 73X XXX</p>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden"><img src="https://placehold.co/100/FF8C42/ffffff?text=TM" class="w-full h-full object-cover"></div>
+                                            <div>
+                                                <p class="font-bold text-navy text-xs en-text">Temu</p>
+                                                <p class="text-xs text-gray-500 truncate w-32">سماعات بلوتوث...</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 font-bold text-gray-600">حوالة النجم</td>
+                                    <td class="py-4 px-6 font-extrabold text-navy en-text">YR 22,500</td>
+                                    <td class="py-4 px-6"><span class="status-badge status-paid">تم الدفع محلياً</span></td>
+                                    <td class="py-4 px-6 text-center">
+                                        <button class="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-gray-50 transition-colors">
+                                            شراء من المتجر
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Row 3: Shipped -->
+                                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                    <td class="py-4 px-6 font-bold text-navy en-text">#WSL-9830</td>
+                                    <td class="py-4 px-6">
+                                        <p class="font-bold text-navy">محمود صالح</p>
+                                        <p class="text-xs text-gray-500 en-text" dir="ltr">+967 71X XXX</p>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden"><img src="https://placehold.co/100/EF4444/ffffff?text=AL" class="w-full h-full object-cover"></div>
+                                            <div>
+                                                <p class="font-bold text-navy text-xs en-text">AliExpress</p>
+                                                <p class="text-xs text-gray-500 truncate w-32">ساعة ذكية...</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 font-bold text-gray-600">جوالي</td>
+                                    <td class="py-4 px-6 font-extrabold text-navy en-text">YR 45,000</td>
+                                    <td class="py-4 px-6"><span class="status-badge status-shipped">في طريقها لليمن</span></td>
+                                    <td class="py-4 px-6 text-center">
+                                        <button class="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-gray-50 transition-colors">
+                                            تحديث التتبع
+                                        </button>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- القسم 2: الطلبات (Orders) -->
+            <div id="section-orders" class="content-section hidden fade-in">
+                <div class="glass-panel p-10 rounded-2xl shadow-card text-center bg-white min-h-[400px] flex flex-col items-center justify-center border border-gray-200">
+                    <div class="w-20 h-20 bg-blue-50 text-primary rounded-full flex items-center justify-center text-4xl mb-4"><i class="fa-solid fa-box-open"></i></div>
+                    <h2 class="text-2xl font-extrabold text-navy mb-2">إدارة الطلبات الشاملة</h2>
+                    <p class="text-gray-500 text-lg">هنا سيتم عرض جميع طلبات Waslah مع إمكانية الفلترة والتصدير كملف Excel.</p>
+                </div>
+            </div>
+
+            <!-- القسم 3: العملاء (Customers) -->
+            <div id="section-customers" class="content-section hidden fade-in">
+                <div class="glass-panel p-10 rounded-2xl shadow-card text-center bg-white min-h-[400px] flex flex-col items-center justify-center border border-gray-200">
+                    <div class="w-20 h-20 bg-green-50 text-success rounded-full flex items-center justify-center text-4xl mb-4"><i class="fa-solid fa-users"></i></div>
+                    <h2 class="text-2xl font-extrabold text-navy mb-2">قاعدة العملاء</h2>
+                    <p class="text-gray-500 text-lg">تحكم كامل ببيانات العملاء، وتتبع سجل المشتريات ومحافظهم الإلكترونية.</p>
+                </div>
+            </div>
+
+            <!-- القسم 4: المالية (Finance) -->
+            <div id="section-finance" class="content-section hidden fade-in">
+                <div class="glass-panel p-10 rounded-2xl shadow-card text-center bg-white min-h-[400px] flex flex-col items-center justify-center border border-gray-200">
+                    <div class="w-20 h-20 bg-orange-50 text-warning rounded-full flex items-center justify-center text-4xl mb-4"><i class="fa-solid fa-wallet"></i></div>
+                    <h2 class="text-2xl font-extrabold text-navy mb-2">المالية والحسابات</h2>
+                    <p class="text-gray-500 text-lg">مراجعة الحوالات البنكية، أرصدة المحافظ، والمطابقات المالية اليومية.</p>
+                </div>
+            </div>
+
+            <!-- القسم 5: الشحن (Shipping) -->
+            <div id="section-shipping" class="content-section hidden fade-in">
+                <div class="glass-panel p-10 rounded-2xl shadow-card text-center bg-white min-h-[400px] flex flex-col items-center justify-center border border-gray-200">
+                    <div class="w-20 h-20 bg-purple-50 text-purple rounded-full flex items-center justify-center text-4xl mb-4"><i class="fa-solid fa-plane-departure"></i></div>
+                    <h2 class="text-2xl font-extrabold text-navy mb-2">تتبع الشحنات الدولية</h2>
+                    <p class="text-gray-500 text-lg">إدارة حركة الطرود من المستودعات العالمية حتى وصولها للمحافظات اليمنية.</p>
+                </div>
+            </div>
+
+            <!-- القسم 6: الإعدادات (Settings) -->
+            <div id="section-settings" class="content-section hidden fade-in">
+                <div class="glass-panel p-10 rounded-2xl shadow-card text-center bg-white min-h-[400px] flex flex-col items-center justify-center border border-gray-200">
+                    <div class="w-20 h-20 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center text-4xl mb-4"><i class="fa-solid fa-gear"></i></div>
+                    <h2 class="text-2xl font-extrabold text-navy mb-2">إعدادات المنصة</h2>
+                    <p class="text-gray-500 text-lg">تحديث بوابات الدفع، صلاحيات الموظفين، وأسعار الصرف وتكاليف الشحن.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Receipt Review -->
+    <div id="receipt-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-navy/80 backdrop-blur-sm" dir="rtl">
+        <div class="bg-white rounded-[24px] shadow-2xl w-[90%] max-w-3xl flex flex-col md:flex-row overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="receipt-content">
+            
+            <!-- Left Side: Receipt Image -->
+            <div class="w-full md:w-1/2 bg-gray-100 p-6 flex flex-col items-center justify-center border-l border-gray-200 relative">
+                <h3 class="text-sm font-bold text-gray-500 mb-4 absolute top-6 right-6">صورة السند المرفقة</h3>
+                <!-- Mock Receipt Image -->
+                <div class="w-full h-80 bg-white rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center mt-8 overflow-hidden">
+                     <img src="https://placehold.co/400x600/F1F5F9/cbd5e1?text=Kuraimi+Receipt+Img" alt="Receipt" class="h-full object-contain">
+                </div>
+                <a href="#" class="text-primary text-sm font-bold mt-4 hover:underline"><i class="fa-solid fa-magnifying-glass-plus"></i> تكبير الصورة</a>
+            </div>
+
+            <!-- Right Side: Action Area -->
+            <div class="w-full md:w-1/2 p-8 relative">
+                <button onclick="closeReceiptModal()" class="absolute top-6 left-6 text-gray-400 hover:text-red-500 transition-colors text-xl focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+                
+                <div class="mb-6">
+                    <span class="bg-orange-100 text-warning px-3 py-1 rounded-full text-xs font-bold mb-3 inline-block">بانتظار التأكيد</span>
+                    <h2 class="text-2xl font-extrabold text-navy">طلب <span class="en-text text-primary">#WSL-9842</span></h2>
+                </div>
+
+                <div class="space-y-4 mb-8 bg-gray-50 p-5 rounded-xl border border-gray-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-bold text-sm">اسم العميل</span>
+                        <span class="text-navy font-bold">أحمد محمد</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-bold text-sm">طريقة الدفع</span>
+                        <span class="text-navy font-bold">بنك الكريمي</span>
+                    </div>
+                    <hr class="border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500 font-bold text-sm">المبلغ المطلوب مطابقته</span>
+                        <span class="text-primary font-black text-xl en-text">YR 13,785</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button id="approve-btn" onclick="approveReceipt()" class="w-full bg-success text-white py-3.5 rounded-xl font-bold text-lg btn-lift flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> تأكيد استلام المبلغ
+                    </button>
+                    <button class="w-full bg-white border-2 border-red-100 text-red-500 py-3.5 rounded-xl font-bold text-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-xmark"></i> السند غير صالح / رفض
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- Navigation Logic (Single Page Application SPA Feel) ---
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+        const pageTitle = document.getElementById('page-title');
+
+        // Function to switch sections programmatically
+        function switchToSection(targetName) {
+            const targetElement = document.querySelector(`.nav-item[data-target="${targetName}"]`);
+            if(targetElement) {
+                targetElement.click();
+            }
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // 1. Remove active state from all navs
+                navItems.forEach(nav => {
+                    nav.classList.remove('active', 'bg-blue-50', 'text-primary');
+                    nav.classList.add('text-gray-600');
+                    nav.style.borderRightColor = "transparent";
+                });
+                
+                // 2. Add active state to clicked nav
+                this.classList.remove('text-gray-600');
+                this.classList.add('active', 'bg-blue-50', 'text-primary');
+                this.style.borderRightColor = "#2563EB";
+
+                // 3. Update Header Title
+                // Remove the notification badge (like the '12' in red) from the text using regex
+                let rawText = this.innerText.replace(/[0-9]/g, '').trim();
+                pageTitle.innerText = rawText;
+
+                // 4. Hide all content sections
+                contentSections.forEach(section => {
+                    section.classList.add('hidden');
+                    section.classList.remove('block');
+                });
+                
+                // 5. Show target section
+                const targetId = 'section-' + this.getAttribute('data-target');
+                const targetSection = document.getElementById(targetId);
+                if(targetSection) {
+                    targetSection.classList.remove('hidden');
+                    targetSection.classList.add('block');
+                }
+
+                // 6. Close Mobile Sidebar automatically upon selection
+                if(window.innerWidth < 768) {
+                    closeSidebar();
+                }
+            });
+        });
+
+        // --- Receipt Modal Logic ---
+        const modal = document.getElementById('receipt-modal');
+        const modalContent = document.getElementById('receipt-content');
+        const approveBtn = document.getElementById('approve-btn');
+
+        function openReceiptModal() {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeReceiptModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // Reset button state if closed
+                approveBtn.innerHTML = '<i class="fa-solid fa-check"></i> تأكيد استلام المبلغ';
+                approveBtn.classList.remove('bg-gray-400');
+                approveBtn.classList.add('bg-success');
+                approveBtn.disabled = false;
+            }, 300);
+        }
+
+        function approveReceipt() {
+            // Simulate API Call
+            approveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التأكيد...';
+            approveBtn.classList.remove('bg-success');
+            approveBtn.classList.add('bg-gray-400');
+            approveBtn.disabled = true;
+
+            setTimeout(() => {
+                approveBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> تم تأكيد الطلب!';
+                approveBtn.classList.remove('bg-gray-400');
+                approveBtn.classList.add('bg-success');
+                
+                // Custom Toast Notification instead of alert
+                showToast("تم تأكيد استلام المبلغ بنجاح، سيتم نقل الطلب للشراء.");
+
+                setTimeout(() => {
+                    closeReceiptModal();
+                }, 1500);
+            }, 1500);
+        }
+
+        function showToast(message) {
+            const toastDiv = document.createElement('div');
+            toastDiv.className = 'fixed bottom-4 right-4 bg-navy text-white px-6 py-3 rounded-xl shadow-lg z-50 font-bold flex items-center gap-3 transform transition-all duration-300 translate-y-20 opacity-0';
+            toastDiv.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> ${message}`;
+            document.body.appendChild(toastDiv);
+            
+            // Animate in
+            setTimeout(() => {
+                toastDiv.classList.remove('translate-y-20', 'opacity-0');
+                toastDiv.classList.add('translate-y-0', 'opacity-100');
+            }, 10);
+            
+            // Animate out
+            setTimeout(() => {
+                toastDiv.classList.add('translate-y-20', 'opacity-0');
+                toastDiv.classList.remove('translate-y-0', 'opacity-100');
+                setTimeout(() => toastDiv.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Mobile Sidebar Logic ---
+        const sidebar = document.getElementById('admin-sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const closeSidebarBtn = document.getElementById('close-sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function openSidebar() {
+            sidebar.classList.remove('translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.add('translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+
+        sidebarToggle.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+    </script>
+</body>
+</html>
